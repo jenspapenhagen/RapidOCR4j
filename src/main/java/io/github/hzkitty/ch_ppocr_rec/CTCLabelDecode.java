@@ -3,11 +3,10 @@ package io.github.hzkitty.ch_ppocr_rec;
 import io.github.hzkitty.entity.WordBoxInfo;
 import lombok.Data;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -147,17 +146,28 @@ public class CTCLabelDecode {
      */
     private List<String> readCharacterFile(String characterPath) {
         List<String> characterList = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(Files.newInputStream(Paths.get(characterPath)), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                line = line.trim();
-                if (!line.isEmpty()) {
-                    characterList.add(line);
+        InputStream inputStream = null;
+        try {
+            Path path = Paths.get(characterPath);
+            if (path.isAbsolute()) {
+                inputStream = Files.newInputStream(path);
+            } else {
+                inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(characterPath);
+                if (inputStream == null) {
+                    throw new FileNotFoundException("Resource not found: " + characterPath);
+                }
+            }
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    line = line.trim();
+                    if (!line.isEmpty()) {
+                        characterList.add(line);
+                    }
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("读取字符文件失败: " + characterPath);
         }
         return characterList;
     }
