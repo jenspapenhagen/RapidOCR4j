@@ -23,7 +23,7 @@ public class OCRTest {
         File file = new File("src/test/resources/text_01.png");
         String imgContent = file.getAbsolutePath();
         OcrResult ocrResult = rapidOCR.run(imgContent);
-        Assertions.assertFalse(ocrResult.getRecRes().isEmpty());
+        Assertions.assertFalse(ocrResult.recRes().isEmpty());
         System.out.println(ocrResult);
     }
 
@@ -34,9 +34,9 @@ public class OCRTest {
         BufferedImage imgContent = ImageIO.read(file);
 
         ParamConfig paramConfig = new ParamConfig();
-        paramConfig.setReturnWordBox(true);
+        //paramConfig.returnWordBox(true); default is true
         OcrResult ocrResult = rapidOCR.run(imgContent, paramConfig);
-        Assertions.assertFalse(ocrResult.getRecRes().isEmpty());
+        Assertions.assertFalse(ocrResult.recRes().isEmpty());
         System.out.println(ocrResult);
     }
 
@@ -46,7 +46,7 @@ public class OCRTest {
         File file = new File("src/test/resources/text_01.png");
         byte[] imgContent = Files.readAllBytes(file.toPath());
         OcrResult ocrResult = rapidOCR.run(imgContent);
-        Assertions.assertFalse(ocrResult.getRecRes().isEmpty());
+        Assertions.assertFalse(ocrResult.recRes().isEmpty());
         System.out.println(ocrResult);
     }
 
@@ -56,7 +56,7 @@ public class OCRTest {
         File file = new File("src/test/resources/text_01.png");
         Mat imgContent = Imgcodecs.imread(file.getAbsolutePath());
         OcrResult ocrResult = rapidOCR.run(imgContent);
-        Assertions.assertFalse(ocrResult.getRecRes().isEmpty());
+        Assertions.assertFalse(ocrResult.recRes().isEmpty());
         System.out.println(ocrResult);
     }
 
