@@ -1,21 +1,15 @@
 package io.github.hzkitty.entity;
 
-import lombok.Data;
 import org.opencv.core.Point;
 
 import java.util.Arrays;
 import java.util.List;
 
-@Data
-public class WordBoxResult {
-    private List<String> wordBoxContentList;
-    private List<Point[]> sortedWordBoxList;
-    private List<Float> confList;
 
-    public WordBoxResult(List<String> wordBoxContentList, List<Point[]> sortedWordBoxList, List<Float> confList) {
-        this.wordBoxContentList = wordBoxContentList;
-        this.sortedWordBoxList = sortedWordBoxList;
-        this.confList = confList;
+public record WordBoxResult(List<String> wordBoxContentList, List<Point[]> sortedWordBoxList, List<Float> confList) {
+
+    public WordBoxResult withSortedWordBoxList(List<Point[]> sortedWordBoxList) {
+        return new WordBoxResult(wordBoxContentList(), sortedWordBoxList, confList());
     }
 
     @Override

@@ -1,9 +1,8 @@
 package io.github.hzkitty.entity;
 
-import lombok.*;
 
 // OCR 主配置类
-@Data
+
 public class OcrConfig {
     public GlobalConfig Global = new GlobalConfig(); // 全局配置
     public DetConfig Det = new DetConfig(); // 检测模块配置
@@ -12,72 +11,141 @@ public class OcrConfig {
 
 
     // 全局配置类
-    @Data
-    public static class GlobalConfig {
-        public float textScore = 0.5f; // 文本评分阈值
-        public boolean useDet = true; // 是否使用检测模块
-        public boolean useCls = true; // 是否使用分类模块
-        public boolean useRec = true; // 是否使用识别模块
-        public boolean printVerbose = false; // 是否打印详细信息
-        public int minHeight = 30; // 最小高度
-        public float widthHeightRatio = 8; // 宽高比
-        public int maxSideLen = 2000; // 最大边长
-        public int minSideLen = 30; // 最小边长
-        public boolean returnWordBox = false; // 是否返回单词级别的框
-        public int intraOpNumThreads = -1; // 单线程操作线程数
-        public int interOpNumThreads = -1; // 多线程操作线程数
-
-        public String opencvLibPath; // opencv环境依赖dll或so目录
+    public record GlobalConfig(
+            float textScore,          // 文本评分阈值
+            boolean useDet,           // 是否使用检测模块
+            boolean useCls,           // 是否使用分类模块
+            boolean useRec,           // 是否使用识别模块
+            boolean printVerbose,     // 是否打印详细信息
+            int minHeight,            // 最小高度
+            float widthHeightRatio,   // 宽高比
+            int maxSideLen,           // 最大边长
+            int minSideLen,           // 最小边长
+            boolean returnWordBox,    // 是否返回单词级别的框
+            int intraOpNumThreads,    // 单线程操作线程数
+            int interOpNumThreads,    // 多线程操作线程数
+            String opencvLibPath      // opencv环境依赖dll或so目录
+    ) {
+        // You can define a compact constructor to apply default values
+        public GlobalConfig() {
+            this(
+                    0.5f,    // textScore
+                    true,    // useDet
+                    true,    // useCls
+                    true,    // useRec
+                    false,   // printVerbose
+                    30,      // minHeight
+                    8.0f,    // widthHeightRatio
+                    2000,    // maxSideLen
+                    30,      // minSideLen
+                    false,   // returnWordBox
+                    -1,      // intraOpNumThreads
+                    -1,      // interOpNumThreads
+                    null     // opencvLibPath
+            );
+        }
     }
 
+
     // 检测模块配置类
-    @Data
-    public static class DetConfig {
-        public int intraOpNumThreads = -1; // 单线程操作线程数
-        public int interOpNumThreads = -1; // 多线程操作线程数
-        public boolean useCuda = false; // 是否使用 CUDA
-        public int deviceId = 0; // 显卡编号
-        public boolean useDml = false; // 是否使用 DML
-        public String modelPath = "models/ch_PP-OCRv4_det_infer.onnx"; // 模型路径
-        public int limitSideLen = 736; // 限制边长
-        public String limitType = "min"; // 限制类型
-        public float thresh = 0.3f; // 检测阈值
-        public float boxThresh = 0.5f; // 边框阈值
-        public int maxCandidates = 1000; // 最大候选框数
-        public float unclipRatio = 1.6f; // 非极大值抑制后的扩展比例
-        public boolean useDilation = true; // 是否使用膨胀操作
-        public String scoreMode = "fast"; // 评分模式
-        public boolean useArena = false; // arena内存池的扩展策略（速度有提升，但内存会剧增，且持续占用，不释放，默认关闭）
+    public record DetConfig(
+            int intraOpNumThreads,   // 单线程操作线程数
+            int interOpNumThreads,   // 多线程操作线程数
+            boolean useCuda,         // 是否使用 CUDA
+            int deviceId,            // 显卡编号
+            boolean useDml,          // 是否使用 DML
+            String modelPath,        // 模型路径
+            int limitSideLen,        // 限制边长
+            String limitType,        // 限制类型
+            float thresh,            // 检测阈值
+            float boxThresh,         // 边框阈值
+            int maxCandidates,       // 最大候选框数
+            float unclipRatio,       // 非极大值抑制后的扩展比例
+            boolean useDilation,     // 是否使用膨胀操作
+            String scoreMode,        // 评分模式
+            boolean useArena         // arena 内存池扩展策略
+    ) {
+        // Compact constructor providing default values (like the original class)
+        public DetConfig() {
+            this(
+                    -1,                         // intraOpNumThreads
+                    -1,                         // interOpNumThreads
+                    false,                      // useCuda
+                    0,                          // deviceId
+                    false,                      // useDml
+                    "models/ch_PP-OCRv4_det_infer.onnx", // modelPath
+                    736,                        // limitSideLen
+                    "min",                      // limitType
+                    0.3f,                       // thresh
+                    0.5f,                       // boxThresh
+                    1000,                       // maxCandidates
+                    1.6f,                       // unclipRatio
+                    true,                       // useDilation
+                    "fast",                     // scoreMode
+                    false                       // useArena
+            );
+        }
     }
 
     // 分类模块配置类
-    @Data
-    public static class ClsConfig {
-        public int intraOpNumThreads = -1; // 单线程操作线程数
-        public int interOpNumThreads = -1; // 多线程操作线程数
-        public boolean useCuda = false; // 是否使用 CUDA
-        public int deviceId = 0; // 显卡编号
-        public boolean useDml = false; // 是否使用 DML
-        public String modelPath = "models/ch_ppocr_mobile_v2.0_cls_infer.onnx"; // 模型路径
-        public int[] clsImageShape = {3, 48, 192}; // 分类输入图像形状
-        public int clsBatchNum = 1; // 分类批量处理数
-        public float clsThresh = 0.9f; // 分类阈值
-        public String[] labelList = {"0", "180"}; // 分类标签列表
-        public boolean useArena = false; // arena内存池的扩展策略（速度有提升，但内存会剧增，且持续占用，不释放，默认关闭）
+    public record ClsConfig(
+            int intraOpNumThreads,   // 单线程操作线程数
+            int interOpNumThreads,   // 多线程操作线程数
+            boolean useCuda,         // 是否使用 CUDA
+            int deviceId,            // 显卡编号
+            boolean useDml,          // 是否使用 DML
+            String modelPath,        // 模型路径
+            int[] clsImageShape,     // 分类输入图像形状
+            int clsBatchNum,         // 分类批量处理数
+            float clsThresh,         // 分类阈值
+            String[] labelList,      // 分类标签列表
+            boolean useArena         // arena 内存池扩展策略
+    ) {
+        // Compact constructor providing default values (same as original class)
+        public ClsConfig() {
+            this(
+                    -1,                                        // intraOpNumThreads
+                    -1,                                        // interOpNumThreads
+                    false,                                     // useCuda
+                    0,                                         // deviceId
+                    false,                                     // useDml
+                    "models/ch_ppocr_mobile_v2.0_cls_infer.onnx", // modelPath
+                    new int[]{3, 48, 192},                    // clsImageShape
+                    1,                                         // clsBatchNum
+                    0.9f,                                      // clsThresh
+                    new String[]{"0", "180"},                 // labelList
+                    false                                      // useArena
+            );
+        }
     }
 
     // 识别模块配置类
-    @Data
-    public static class RecConfig {
-        public int intraOpNumThreads = -1; // 单线程操作线程数
-        public int interOpNumThreads = -1; // 多线程操作线程数
-        public boolean useCuda = false; // 是否使用 CUDA
-        public int deviceId = 0; // 显卡编号
-        public boolean useDml = false; // 是否使用 DML
-        public String modelPath = "models/ch_PP-OCRv4_rec_infer.onnx"; // 模型路径
-        public int[] recImgShape = {3, 48, 320}; // 识别输入图像形状
-        public int recBatchNum = 1; // 识别批量处理数
-        public boolean useArena = false; // arena内存池的扩展策略（速度有提升，但内存会剧增，且持续占用，不释放，默认关闭）
-        public String recKeysPath; // 字典路径，如果不设置，默认从模型获取
+    public record RecConfig(
+            int intraOpNumThreads,   // 单线程操作线程数
+            int interOpNumThreads,   // 多线程操作线程数
+            boolean useCuda,         // 是否使用 CUDA
+            int deviceId,            // 显卡编号
+            boolean useDml,          // 是否使用 DML
+            String modelPath,        // 模型路径
+            int[] recImgShape,       // 识别输入图像形状
+            int recBatchNum,         // 识别批量处理数
+            boolean useArena,        // arena 内存池扩展策略
+            String recKeysPath       // 字典路径（可选）
+    ) {
+        // Compact constructor providing default values (matching your original class)
+        public RecConfig() {
+            this(
+                    -1,                               // intraOpNumThreads
+                    -1,                               // interOpNumThreads
+                    false,                            // useCuda
+                    0,                                // deviceId
+                    false,                            // useDml
+                    "models/ch_PP-OCRv4_rec_infer.onnx", // modelPath
+                    new int[]{3, 48, 320},           // recImgShape
+                    1,                                // recBatchNum
+                    false,                            // useArena
+                    null                              // recKeysPath
+            );
+        }
     }
 }

@@ -1,36 +1,33 @@
 package io.github.hzkitty.ch_ppocr_rec;
 
 import io.github.hzkitty.entity.WordBoxInfo;
-import lombok.Data;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 用于存储 decode 后的结果
  */
-@Data
-class DecodeResult {
-    private String text;        // 解码出的文本
-    private float confidence;   // 平均置信度
+record DecodeResult(String text, float confidence,WordBoxInfo wordBoxInfo) {
+//    private String text;        // 解码出的文本
+//    private float confidence;   // 平均置信度
+//
+//    // 存储文本坐标/word box 等信息
+//    private WordBoxInfo wordBoxInfo;
 
-    // 存储文本坐标/word box 等信息
-    private WordBoxInfo wordBoxInfo;
-
-    public DecodeResult(String text, float confidence) {
-        this.text = text;
-        this.confidence = confidence;
-    }
-
-    public DecodeResult(String text, float confidence, WordBoxInfo wordBoxInfo) {
-        this.text = text;
-        this.confidence = confidence;
-        this.wordBoxInfo = wordBoxInfo;
-    }
 }
 
 /**
@@ -104,7 +101,7 @@ public class CTCLabelDecode {
             for (int i = 0; i < decodeResults.size(); i++) {
                 // 对 decodeResults 里某些字段做修正，调整 decodeResults 内的数据
                 float whRatio = whRatioList.get(i);
-                decodeResults.get(i).getWordBoxInfo().setTextIndexLen(decodeResults.get(i).getWordBoxInfo().getTextIndexLen() * (whRatio / maxWhRatio));
+                decodeResults.get(i).wordBoxInfo().withTextIndexLen(decodeResults.get(i).wordBoxInfo().textIndexLen() * (whRatio / maxWhRatio));
             }
         }
 
@@ -261,7 +258,7 @@ public class CTCLabelDecode {
 
             // 若不需要 wordBox，直接返回 (text, avgConf)
             if (!returnWordBox) {
-                resultList.add(new DecodeResult(decodedText, avgConf));
+                resultList.add(new DecodeResult(decodedText, avgConf, null));
             } else {
                 // 需要获取分词信息
                 // 这里可参考 Python 中的 get_word_info 方法

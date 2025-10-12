@@ -1,22 +1,12 @@
 package io.github.hzkitty.entity;
 
-import lombok.Data;
 
 /**
  * 用于存储文本识别结果 (text, conf)
  */
-@Data
-public class TupleResult {
-    private final String text;
-    private final float confidence;
-    private WordBoxInfo wordBoxInfo;
-    private WordBoxResult wordBoxResult;
 
-    public TupleResult(String text, float confidence, WordBoxInfo wordBoxInfo) {
-        this.text = text;
-        this.confidence = confidence;
-        this.wordBoxInfo = wordBoxInfo;
-    }
+public record TupleResult(String text, float confidence, WordBoxInfo wordBoxInfo, WordBoxResult wordBoxResult) {
+
 
     @Override
     public String toString() {

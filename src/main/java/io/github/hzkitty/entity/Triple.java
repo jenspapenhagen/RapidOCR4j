@@ -4,21 +4,12 @@ import java.util.Objects;
 
 /**
  * 简单的不可变三元组 (Triple)。
- * 
+ *
  * @param <L> left 元素类型
  * @param <M> middle 元素类型
  * @param <R> right 元素类型
  */
-public final class Triple<L, M, R> {
-    private final L left;
-    private final M middle;
-    private final R right;
-
-    private Triple(L left, M middle, R right) {
-        this.left = left;
-        this.middle = middle;
-        this.right = right;
-    }
+public record Triple<L, M, R>(L left, M middle, R right) {
 
     /**
      * 静态工厂方法。
@@ -27,31 +18,17 @@ public final class Triple<L, M, R> {
         return new Triple<>(left, middle, right);
     }
 
-    public L getLeft() {
-        return left;
-    }
-
-    public M getMiddle() {
-        return middle;
-    }
-
-    public R getRight() {
-        return right;
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Triple)) return false;
-        Triple<?, ?, ?> other = (Triple<?, ?, ?>) o;
-        return Objects.equals(left, other.left)
-                && Objects.equals(middle, other.middle)
-                && Objects.equals(right, other.right);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(left, middle, right);
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Triple<?, ?, ?>(Object left1, Object middle1, Object right1))) {
+            return false;
+        }
+        return Objects.equals(left, left1)
+                && Objects.equals(middle, middle1)
+                && Objects.equals(right, right1);
     }
 
     @Override
