@@ -2,9 +2,9 @@ package io.github.hzkitty.ch_ppocr_cls;
 
 import ai.onnxruntime.OrtException;
 import io.github.hzkitty.entity.OcrConfig;
+import io.github.hzkitty.entity.OrtInferConfig;
 import io.github.hzkitty.entity.Pair;
 import io.github.hzkitty.entity.Triple;
-import io.github.hzkitty.entity.OrtInferConfig;
 import io.github.hzkitty.utils.OrtInferSession;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -39,20 +39,20 @@ public class TextClassifier {
      */
     public TextClassifier(OcrConfig.ClsConfig clsConfig) {
         // 从配置中读取相关的分类参数
-        this.clsImageShape = clsConfig.getClsImageShape(); // [C, H, W]
-        this.clsBatchNum = clsConfig.getClsBatchNum();
-        this.clsThresh = clsConfig.getClsThresh();
-        this.postProcessOp = new ClsPostProcess(clsConfig.getLabelList());
+        this.clsImageShape = clsConfig.clsImageShape(); // [C, H, W]
+        this.clsBatchNum = clsConfig.clsBatchNum();
+        this.clsThresh = clsConfig.clsThresh();
+        this.postProcessOp = new ClsPostProcess(clsConfig.labelList());
 
         // 初始化推理会话
-        OrtInferConfig ortInferConfig = new OrtInferConfig();
-        ortInferConfig.setIntraOpNumThreads(clsConfig.intraOpNumThreads);
-        ortInferConfig.setInterOpNumThreads(clsConfig.interOpNumThreads);
-        ortInferConfig.setUseCuda(clsConfig.useCuda);
-        ortInferConfig.setDeviceId(clsConfig.deviceId);
-        ortInferConfig.setUseDml(clsConfig.useDml);
-        ortInferConfig.setModelPath(clsConfig.modelPath);
-        ortInferConfig.setUseArena(clsConfig.useArena);
+        OrtInferConfig ortInferConfig = new OrtInferConfig(
+                clsConfig.intraOpNumThreads(),
+                clsConfig.interOpNumThreads(),
+                clsConfig.useCuda(),
+                clsConfig.deviceId(),
+                clsConfig.useDml(),
+                clsConfig.modelPath(),
+                clsConfig.useArena());
         this.inferSession = new OrtInferSession(ortInferConfig);
     }
 
@@ -125,8 +125,8 @@ public class TextClassifier {
             // 将分类结果放回原来的顺序位置
             for (int rno = 0; rno < clsResult.size(); rno++) {
                 Pair<String, Float> pair = clsResult.get(rno);
-                String label = pair.getLeft();
-                float score = pair.getRight();
+                String label = pair.left();
+                float score = pair.right();
 
                 // 放到 clsRes 对应的真实索引位置中
                 int realIndex = indices.get(beg + rno);

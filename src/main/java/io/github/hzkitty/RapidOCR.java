@@ -4,16 +4,30 @@ import io.github.hzkitty.cal_rec_boxes.CalRecBoxes;
 import io.github.hzkitty.ch_ppocr_cls.TextClassifier;
 import io.github.hzkitty.ch_ppocr_det.TextDetector;
 import io.github.hzkitty.ch_ppocr_rec.TextRecognizer;
-import io.github.hzkitty.entity.*;
+import io.github.hzkitty.entity.OcrConfig;
+import io.github.hzkitty.entity.OcrResult;
+import io.github.hzkitty.entity.Pair;
+import io.github.hzkitty.entity.ParamConfig;
+import io.github.hzkitty.entity.RecResult;
+import io.github.hzkitty.entity.Triple;
+import io.github.hzkitty.entity.TupleResult;
 import io.github.hzkitty.utils.LoadImage;
 import io.github.hzkitty.utils.OpencvLoader;
 import io.github.hzkitty.utils.ProcessImg;
-import org.opencv.core.*;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RapidOCR {
@@ -49,30 +63,30 @@ public class RapidOCR {
     }
 
     public RapidOCR(OcrConfig config) {
-        if (config.getGlobal().getOpencvLibPath() != null) {
-            OpencvLoader.loadOpencvLib(config.getGlobal().getOpencvLibPath());
+        if (config.Global.opencvLibPath() != null) {
+            OpencvLoader.loadOpencvLib(config.Global.opencvLibPath());
         } else {
             OpencvLoader.loadOpencvLib();
         }
-        OcrConfig.GlobalConfig globalConfig = config.getGlobal();
-        this.printVerbose = globalConfig.isPrintVerbose();
-        this.textScore = globalConfig.getTextScore();
-        this.minHeight = globalConfig.getMinHeight();
-        this.widthHeightRatio = globalConfig.getWidthHeightRatio();
+        OcrConfig.GlobalConfig globalConfig = config.Global;
+        this.printVerbose = globalConfig.printVerbose();
+        this.textScore = globalConfig.textScore();
+        this.minHeight = globalConfig.minHeight();
+        this.widthHeightRatio = globalConfig.widthHeightRatio();
 
         // 初始化 检测/分类/识别模块
-        this.useDet = globalConfig.isUseDet();
-        this.textDet = new TextDetector(config.getDet());
+        this.useDet = globalConfig.useDet();
+        this.textDet = new TextDetector(config.Det);
 
-        this.useCls = globalConfig.isUseCls();
-        this.textCls = new TextClassifier(config.getCls());
+        this.useCls = globalConfig.useCls();
+        this.textCls = new TextClassifier(config.Cls);
 
-        this.useRec = globalConfig.isUseRec();
-        this.textRec = new TextRecognizer(config.getRec());
+        this.useRec = globalConfig.useRec();
+        this.textRec = new TextRecognizer(config.Rec);
 
         this.loadImage = new LoadImage();
-        this.maxSideLen = globalConfig.getMaxSideLen();
-        this.minSideLen = globalConfig.getMinSideLen();
+        this.maxSideLen = globalConfig.maxSideLen();
+        this.minSideLen = globalConfig.minSideLen();
 
         // 初始化文本框后处理模块
         this.calRecBoxes = new CalRecBoxes();
@@ -128,18 +142,18 @@ public class RapidOCR {
     private OcrResult runImpl(Object imgContent, ParamConfig paramConfig) throws Exception {
         long startTime = System.nanoTime(); // 记录开始时间 (纳秒)
         // 如果外部没有传值，则使用类内部的默认值
-        boolean realUseDet = (paramConfig.getUseDet() == null) ? this.useDet : paramConfig.getUseDet();
-        boolean realUseCls = (paramConfig.getUseCls() == null) ? this.useCls : paramConfig.getUseCls();
-        boolean realUseRec = (paramConfig.getUseRec() == null) ? this.useRec : paramConfig.getUseRec();
+        boolean realUseDet = (paramConfig.useDet() == null) ? this.useDet : paramConfig.useDet();
+        boolean realUseCls = (paramConfig.useCls() == null) ? this.useCls : paramConfig.useCls();
+        boolean realUseRec = (paramConfig.useRec() == null) ? this.useRec : paramConfig.useRec();
 
-        float realTextScore = (paramConfig.getTextScore() == null) ? this.textScore : paramConfig.getTextScore();
-        boolean returnWordBox = paramConfig.getReturnWordBox() != null && paramConfig.getReturnWordBox();
+        float realTextScore = (paramConfig.textScore() == null) ? this.textScore : paramConfig.textScore();
+        boolean returnWordBox = paramConfig.returnWordBox() != null && paramConfig.returnWordBox();
 
-        if (paramConfig.getBoxThresh() != null) {
-            textDet.postprocessOp.boxThresh = paramConfig.getBoxThresh();
+        if (paramConfig.boxThresh() != null) {
+            textDet.postprocessOp.boxThresh = paramConfig.boxThresh();
         }
-        if (paramConfig.getUnclipRatio() != null) {
-            textDet.postprocessOp.unclipRatio = paramConfig.getUnclipRatio();
+        if (paramConfig.unclipRatio() != null) {
+            textDet.postprocessOp.unclipRatio = paramConfig.unclipRatio();
         }
 
         // 加载图片
@@ -150,9 +164,9 @@ public class RapidOCR {
 
         // 预处理（缩放到合理大小）
         Triple<Mat, Float, Float> processedImg = this.preprocess(img);
-        img = processedImg.getLeft();
-        Float ratioH = processedImg.getMiddle();
-        Float ratioW = processedImg.getRight();
+        img = processedImg.left();
+        Float ratioH = processedImg.middle();
+        Float ratioW = processedImg.right();
         Map<String, Object> opRecord = new HashMap<>();
         Map<String, Float> preprocess = new HashMap<>();
         preprocess.put("ratio_h", ratioH);
@@ -173,8 +187,8 @@ public class RapidOCR {
             img = this.maybeAddLetterbox(img, opRecord);
             // 执行文本检测
             Pair<List<Point[]>, Double> detResult = textDet.call(img);
-            dtBoxes = detResult.getLeft();       // 检测得到的文本框
-            detElapsed = detResult.getRight();  // 检测所耗时间（秒）
+            dtBoxes = detResult.left();       // 检测得到的文本框
+            detElapsed = detResult.right();  // 检测所耗时间（秒）
 
             if (dtBoxes == null || dtBoxes.isEmpty()) {
                 // 如果没检测到任何文本框，直接返回空结果
@@ -194,17 +208,17 @@ public class RapidOCR {
         // ========== 2、分类阶段 ==========
         if (realUseCls) {
             Triple<List<Mat>, List<Pair<String, Float>>, Double> clsResultTriple = textCls.call(imgList);
-            imgList = clsResultTriple.getLeft();  // 分类器可能帮我们转正图像
-            clsRes = clsResultTriple.getMiddle();          // 分类的标签+置信度
-            clsElapsed = clsResultTriple.getRight();       // 分类耗时(秒)
+            imgList = clsResultTriple.left();  // 分类器可能帮我们转正图像
+            clsRes = clsResultTriple.middle();          // 分类的标签+置信度
+            clsElapsed = clsResultTriple.right();       // 分类耗时(秒)
         }
 
         // ========== 3、识别阶段 ==========
         if (realUseRec) {
             // 是否返回单词级别的框
             Pair<List<TupleResult>, Double> resultBundle = textRec.call(imgList, returnWordBox);
-            recRes = resultBundle.getLeft();
-            recElapsed = resultBundle.getRight();
+            recRes = resultBundle.left();
+            recElapsed = resultBundle.right();
         }
 
         // ========== 后处理：计算 word-level boxes（可选） ==========
@@ -214,9 +228,9 @@ public class RapidOCR {
 
             // 接下来需要把坐标映射回原图 (根据预处理记录 + Padding 记录)
             for (TupleResult recResi : recRes) {
-                if (recResi.getWordBoxResult().getSortedWordBoxList() != null) {
-                    List<Point[]> originPoints = this.getOriginPoints(recResi.getWordBoxResult().getSortedWordBoxList(), opRecord, rawH, rawW);
-                    recResi.getWordBoxResult().setSortedWordBoxList(originPoints);
+                if (recResi.wordBoxResult().sortedWordBoxList() != null) {
+                    List<Point[]> originPoints = this.getOriginPoints(recResi.wordBoxResult().sortedWordBoxList(), opRecord, rawH, rawW);
+                    recResi.wordBoxResult().withSortedWordBoxList(originPoints);
                 }
             }
         }
@@ -235,7 +249,7 @@ public class RapidOCR {
             // 将 clsRes 转成 RecResult 列表
             List<RecResult> recResultList = new ArrayList<>();
             for (Pair<String, Float> pair : clsRes) {
-                recResultList.add(new RecResult(null, pair.getLeft(), pair.getRight(), null));
+                recResultList.add(new RecResult(null, pair.left(), pair.right(), null));
             }
             return new OcrResult("", recResultList, elapseSec, detElapsed, clsElapsed, recElapsed);
         }
@@ -248,9 +262,9 @@ public class RapidOCR {
             // 将 recRes 封装到 RecResult
             List<RecResult> recResultList = new ArrayList<>();
             for (TupleResult tr : recRes) {
-                recResultList.add(new RecResult(null, tr.getText(), tr.getConfidence(), tr.getWordBoxResult()));
+                recResultList.add(new RecResult(null, tr.text(), tr.confidence(), tr.wordBoxResult()));
             }
-            String strRes = recResultList.stream().map(RecResult::getText).collect(Collectors.joining("\n"));
+            String strRes = recResultList.stream().map(RecResult::text).collect(Collectors.joining("\n"));
             return new OcrResult(strRes, recResultList, elapseSec, detElapsed, clsElapsed, recElapsed);
         }
 
@@ -263,8 +277,8 @@ public class RapidOCR {
             return new OcrResult("", recResultList, elapseSec, detElapsed, clsElapsed, recElapsed);
         }
         Pair<List<Point[]>, List<TupleResult>> filtered = filterResult(dtBoxes, recRes);
-        List<Point[]> filteredBoxes = filtered.getLeft();
-        List<TupleResult> filteredRes = filtered.getRight();
+        List<Point[]> filteredBoxes = filtered.left();
+        List<TupleResult> filteredRes = filtered.right();
         if (filteredBoxes == null || filteredRes == null || filteredBoxes.isEmpty()) {
             return new OcrResult("", Collections.emptyList(), elapseSec, detElapsed, clsElapsed, recElapsed);
         }
@@ -272,11 +286,11 @@ public class RapidOCR {
         List<RecResult> recResultList = new ArrayList<>();
         for (int i = 0; i < filteredBoxes.size(); i++) {
             TupleResult tr = filteredRes.get(i);
-            RecResult recResult = new RecResult(filteredBoxes.get(i), tr.getText(),
-                    tr.getConfidence(), tr.getWordBoxResult());
+            RecResult recResult = new RecResult(filteredBoxes.get(i), tr.text(),
+                    tr.confidence(), tr.wordBoxResult());
             recResultList.add(recResult);
         }
-        String strRes = recResultList.stream().map(RecResult::getText).collect(Collectors.joining("\n"));
+        String strRes = recResultList.stream().map(RecResult::text).collect(Collectors.joining("\n"));
         return new OcrResult(strRes, recResultList, elapseSec, detElapsed, clsElapsed, recElapsed);
     }
 
@@ -292,7 +306,7 @@ public class RapidOCR {
             TupleResult t = recRes.get(i);
 
             // if score >= self.text_score
-            if (t.getConfidence() >= textScore) {
+            if (t.confidence() >= textScore) {
                 filterBoxes.add(box);
                 filterRecRes.add(t);
             }
@@ -316,9 +330,9 @@ public class RapidOCR {
         if (maxValue > this.maxSideLen) {
             try {
                 Triple<Mat, Float, Float> reduced = ProcessImg.reduceMaxSide(img, this.maxSideLen);
-                img = reduced.getLeft();
-                ratioH = reduced.getMiddle();
-                ratioW = reduced.getRight();
+                img = reduced.left();
+                ratioH = reduced.middle();
+                ratioW = reduced.right();
             } catch (ProcessImg.ResizeImgError e) {
                 e.printStackTrace();
             }
@@ -333,9 +347,9 @@ public class RapidOCR {
         if (minValue < this.minSideLen) {
             try {
                 Triple<Mat, Float, Float> increased = ProcessImg.increaseMinSide(img, this.minSideLen);
-                Mat after = increased.getLeft();
-                float scaleH = increased.getMiddle();
-                float scaleW = increased.getRight();
+                Mat after = increased.left();
+                float scaleH = increased.middle();
+                float scaleW = increased.right();
 
                 // 注意：要将前一次 ratio 乘上这次的 ratio 才是最终总缩放比
                 ratioH *= scaleH;

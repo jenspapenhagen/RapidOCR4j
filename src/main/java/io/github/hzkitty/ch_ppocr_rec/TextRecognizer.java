@@ -11,7 +11,11 @@ import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public class TextRecognizer {
@@ -29,14 +33,13 @@ public class TextRecognizer {
      */
     public TextRecognizer(OcrConfig.RecConfig recConfig) {
         // 初始化推理会话
-        OrtInferConfig ortInferConfig = new OrtInferConfig();
-        ortInferConfig.setIntraOpNumThreads(recConfig.intraOpNumThreads);
-        ortInferConfig.setInterOpNumThreads(recConfig.interOpNumThreads);
-        ortInferConfig.setUseCuda(recConfig.useCuda);
-        ortInferConfig.setDeviceId(recConfig.deviceId);
-        ortInferConfig.setUseDml(recConfig.useDml);
-        ortInferConfig.setModelPath(recConfig.modelPath);
-        ortInferConfig.setUseArena(recConfig.useArena);
+        OrtInferConfig ortInferConfig = new OrtInferConfig(recConfig.intraOpNumThreads(),
+                recConfig.interOpNumThreads(),
+                recConfig.useCuda(),
+                recConfig.deviceId(),
+                recConfig.useDml(),
+                recConfig.modelPath(),
+                recConfig.useArena());
         // 1. 创建 ONNX 推理会话
         this.session = new OrtInferSession(ortInferConfig);
 
@@ -47,15 +50,15 @@ public class TextRecognizer {
         }
 
         // 3. 获取自定义字符文件路径
-        String characterPath = recConfig.getRecKeysPath();
+        String characterPath = recConfig.recKeysPath();
 
         // 4. 初始化 CTC 后处理类
         this.postprocessOp = new CTCLabelDecode(character, characterPath);
 
         // 5. 批处理数量 & 图像形状
-        this.recBatchNum = recConfig.getRecBatchNum();
+        this.recBatchNum = recConfig.recBatchNum();
         // 例如 [3, 32, 320]
-        this.recImageShape = recConfig.getRecImgShape();
+        this.recImageShape = recConfig.recImgShape();
     }
 
     /**
@@ -90,7 +93,7 @@ public class TextRecognizer {
         TupleResult[] recRes = new TupleResult[imgList.size()];
         // 先初始化空值
         for (int i = 0; i < recRes.length; i++) {
-            recRes[i] = new TupleResult("", 0.0f, null);
+            recRes[i] = new TupleResult("", 0.0f, null, null);
         }
 
         // 4. 批量处理
@@ -150,7 +153,7 @@ public class TextRecognizer {
             for (int rno = 0; rno < recResult.size(); rno++) {
                 DecodeResult dr = recResult.get(rno);
                 int origIdx = indices[beg + rno];
-                recRes[origIdx] = new TupleResult(dr.getText(), dr.getConfidence(), dr.getWordBoxInfo());
+                recRes[origIdx] = new TupleResult(dr.text(), dr.confidence(), dr.wordBoxInfo(), null);
             }
         }
 

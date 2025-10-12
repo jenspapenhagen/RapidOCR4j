@@ -31,9 +31,9 @@ public class OrtInferSession {
     public OrtInferSession(OrtInferConfig ortInferConfig) {
         logger.info("Initializing OrtInferSession...");
 
-        String modelPath = ortInferConfig.getModelPath();
-        this.useCuda = ortInferConfig.useCuda;
-        this.useDirectML = ortInferConfig.useDml;
+        String modelPath = ortInferConfig.modelPath();
+        this.useCuda = ortInferConfig.useCuda();
+        this.useDirectML = ortInferConfig.useDml();
 
         // 1、创建 ONNX Runtime 环境
         this.env = OrtEnvironment.getEnvironment("OrtInferSessionEnv");
@@ -43,23 +43,23 @@ public class OrtInferSession {
             SessionOptions sessionOptions = initSessionOptions(ortInferConfig);
             EnumSet<OrtProvider> availableProviders = env.getAvailableProviders();
             if (this.useCuda && availableProviders.contains(OrtProvider.CUDA)) {
-                OrtCUDAProviderOptions providerOptions = new OrtCUDAProviderOptions(ortInferConfig.getDeviceId());
+                OrtCUDAProviderOptions providerOptions = new OrtCUDAProviderOptions(ortInferConfig.deviceId());
                 // kNextPowerOfTwo（默认值）以 2 的幂数扩展，而 kSameAsRequested 每次扩展的大小与分配请求的大小相同。
                 providerOptions.add("arena_extend_strategy", "kNextPowerOfTwo");
                 providerOptions.add("cudnn_conv_algo_search", "EXHAUSTIVE");
                 providerOptions.add("do_copy_in_default_stream", "1");
                 sessionOptions.addCUDA(providerOptions);
-                logger.info("Requested CUDA EP added to session options, deviceId: {}.", ortInferConfig.getDeviceId());
+                logger.info("Requested CUDA EP added to session options, deviceId: {}.", ortInferConfig.deviceId());
             }
 
             if (this.useDirectML && availableProviders.contains(OrtProvider.DIRECT_ML)) {
-                sessionOptions.addDirectML(ortInferConfig.getDeviceId());
+                sessionOptions.addDirectML(ortInferConfig.deviceId());
                 logger.info("Requested DirectML EP - might not be supported in certain Java packages.");
             }
 
             // 最后添加 CPU
             if (availableProviders.contains(OrtProvider.CPU)) {
-                sessionOptions.addCPU(ortInferConfig.useArena);
+                sessionOptions.addCPU(ortInferConfig.useArena());
                 logger.info("CPU EP added to session options.");
             }
 
@@ -88,16 +88,16 @@ public class OrtInferSession {
         SessionOptions sessOpt = new SessionOptions();
         int cpuNums = Runtime.getRuntime().availableProcessors();
 
-        int intraOpNumThreads = ortInferConfig.intraOpNumThreads;
+        int intraOpNumThreads = ortInferConfig.intraOpNumThreads();
         if (intraOpNumThreads >= 1 && intraOpNumThreads <= cpuNums) {
             sessOpt.setIntraOpNumThreads(intraOpNumThreads);
         }
-        int interOpNumThreads = ortInferConfig.interOpNumThreads;
+        int interOpNumThreads = ortInferConfig.interOpNumThreads();
         if (interOpNumThreads >= 1 && interOpNumThreads <= cpuNums) {
             sessOpt.setInterOpNumThreads(interOpNumThreads);
         }
         // 禁用 arena 内存池的扩展策略
-        sessOpt.setCPUArenaAllocator(ortInferConfig.useArena);
+        sessOpt.setCPUArenaAllocator(ortInferConfig.useArena());
         // 启用图优化
         sessOpt.setOptimizationLevel(SessionOptions.OptLevel.ALL_OPT);
         // 日志等级

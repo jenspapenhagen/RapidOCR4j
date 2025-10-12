@@ -3,7 +3,11 @@ package io.github.hzkitty.cal_rec_boxes;
 import io.github.hzkitty.entity.TupleResult;
 import io.github.hzkitty.entity.WordBoxInfo;
 import io.github.hzkitty.entity.WordBoxResult;
-import org.opencv.core.*;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -38,9 +42,9 @@ public class CalRecBoxes {
             String direction = getBoxDirection(box);
 
             // 2. 获取OCR识别文本、置信度、以及字/单词信息
-            String recTxt = tupleRes.getText();
-            float recConf = tupleRes.getConfidence();
-            WordBoxInfo recWordInfo = tupleRes.getWordBoxInfo();
+            String recTxt = tupleRes.text();
+            float recConf = tupleRes.confidence();
+            WordBoxInfo recWordInfo = tupleRes.wordBoxInfo();
 
             // 3. 构造整段文字的最大矩形边界
             int h = img.rows();
@@ -56,17 +60,16 @@ public class CalRecBoxes {
             WordBoxResult boxResult = calOcrWordBox(recTxt, imgBox, recWordInfo);
 
             // 5. 调整坐标框(去除重叠)
-            List<Point[]> adjustedBoxList = adjustBoxOverlap(boxResult.getSortedWordBoxList());
+            List<Point[]> adjustedBoxList = adjustBoxOverlap(boxResult.sortedWordBoxList());
 
             // 6. 根据dtBox(实际检测框) + 方向，进行坐标的逆映射(校正)
             List<Point[]> finalBoxList = reverseRotateCropImage(box, adjustedBoxList, direction);
 
             // 7. 将计算后的坐标信息保存到新的 TupleResult 中
-            TupleResult newResult = new TupleResult(recTxt, recConf, null);
-            WordBoxResult wordBoxResult = new WordBoxResult(boxResult.getWordBoxContentList(),
+            WordBoxResult wordBoxResult = new WordBoxResult(boxResult.wordBoxContentList(),
                     finalBoxList,
-                    boxResult.getConfList());
-            newResult.setWordBoxResult(wordBoxResult);
+                    boxResult.confList());
+            TupleResult newResult = new TupleResult(recTxt, recConf, null, wordBoxResult);
             results.add(newResult);
         }
 
@@ -101,11 +104,11 @@ public class CalRecBoxes {
      */
     private WordBoxResult calOcrWordBox(String recTxt, Point[] box, WordBoxInfo recWordInfo) {
         //  col_num, word_list, word_col_list, state_list, conf_list = rec_word_info
-        double colNum = recWordInfo.getTextIndexLen();  // 列数
-        List<List<String>> wordList = recWordInfo.getWordList();
-        List<List<Integer>> wordColList = recWordInfo.getWordColList();
-        List<String> stateList = recWordInfo.getStateList();
-        List<Float> confList = recWordInfo.getConfList();
+        double colNum = recWordInfo.textIndexLen();  // 列数
+        List<List<String>> wordList = recWordInfo.wordList();
+        List<List<Integer>> wordColList = recWordInfo.wordColList();
+        List<String> stateList = recWordInfo.stateList();
+        List<Float> confList = recWordInfo.confList();
 
         // box: [[x0,y0],[x1,y1],[x2,y2],[x3,y3]]
         double bboxXStart = box[0].x;

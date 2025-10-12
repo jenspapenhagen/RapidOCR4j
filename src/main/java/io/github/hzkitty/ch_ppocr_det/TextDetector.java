@@ -2,13 +2,16 @@ package io.github.hzkitty.ch_ppocr_det;
 
 import ai.onnxruntime.OrtException;
 import io.github.hzkitty.entity.OcrConfig;
-import io.github.hzkitty.entity.Pair;
 import io.github.hzkitty.entity.OrtInferConfig;
+import io.github.hzkitty.entity.Pair;
 import io.github.hzkitty.utils.OrtInferSession;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * 文本检测
@@ -28,34 +31,35 @@ public class TextDetector {
      */
     public TextDetector(OcrConfig.DetConfig detConfig) {
         // 1. 获取 limitType / limitSideLen
-        this.limitType = detConfig.getLimitType();
-        this.limitSideLen = detConfig.getLimitSideLen();
+        this.limitType = detConfig.limitType();
+        this.limitSideLen = detConfig.limitSideLen();
 
         // 2. 后处理参数
-        float thresh = detConfig.getThresh();
-        float boxThresh = detConfig.getBoxThresh();
-        int maxCandidates = detConfig.getMaxCandidates();
-        float unclipRatio =detConfig.getUnclipRatio();
-        boolean useDilation = detConfig.useDilation;
-        String scoreMode = detConfig.getScoreMode();
+        float thresh = detConfig.thresh();
+        float boxThresh = detConfig.boxThresh();
+        int maxCandidates = detConfig.maxCandidates();
+        float unclipRatio = detConfig.unclipRatio();
+        boolean useDilation = detConfig.useDilation();
+        String scoreMode = detConfig.scoreMode();
 
         // 初始化后处理
         this.postprocessOp = new DBPostProcess(thresh, boxThresh, maxCandidates, unclipRatio, scoreMode, useDilation);
 
         // 初始化推理会话
-        OrtInferConfig ortInferConfig = new OrtInferConfig();
-        ortInferConfig.setIntraOpNumThreads(detConfig.intraOpNumThreads);
-        ortInferConfig.setInterOpNumThreads(detConfig.interOpNumThreads);
-        ortInferConfig.setUseCuda(detConfig.useCuda);
-        ortInferConfig.setDeviceId(detConfig.deviceId);
-        ortInferConfig.setUseDml(detConfig.useDml);
-        ortInferConfig.setModelPath(detConfig.modelPath);
-        ortInferConfig.setUseArena(detConfig.useArena);
+        OrtInferConfig ortInferConfig = new OrtInferConfig(
+                detConfig.intraOpNumThreads(),
+                detConfig.interOpNumThreads(),
+                detConfig.useCuda(),
+                detConfig.deviceId(),
+                detConfig.useDml(),
+                detConfig.modelPath(),
+                detConfig.useArena());
         this.infer = new OrtInferSession(ortInferConfig);
     }
 
     /**
      * 对输入图像进行文本检测
+     *
      * @param img 输入图像 (OpenCV Mat 或 np.ndarray对应的Java结构)
      * @return (检测到的文本框, 处理时间)，其中文本框可为 null 若无结果
      * @throws OrtException 异常
