@@ -62,7 +62,7 @@ public class OpencvLoader {
                 return;
             }
 
-            nu.pattern.OpenCV.loadShared();
+            nu.pattern.OpenCV.loadLocally();
             log.info("Loaded OpenCV library success");
         }
     }

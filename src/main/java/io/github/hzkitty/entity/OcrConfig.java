@@ -26,7 +26,6 @@ public class OcrConfig {
             int interOpNumThreads,    // 多线程操作线程数
             String opencvLibPath      // opencv环境依赖dll或so目录
     ) {
-        // You can define a compact constructor to apply default values
         public GlobalConfig() {
             this(
                     0.5f,    // textScore
@@ -65,7 +64,6 @@ public class OcrConfig {
             String scoreMode,        // 评分模式
             boolean useArena         // arena 内存池扩展策略
     ) {
-        // Compact constructor providing default values (like the original class)
         public DetConfig() {
             this(
                     -1,                         // intraOpNumThreads
@@ -101,7 +99,6 @@ public class OcrConfig {
             String[] labelList,      // 分类标签列表
             boolean useArena         // arena 内存池扩展策略
     ) {
-        // Compact constructor providing default values (same as original class)
         public ClsConfig() {
             this(
                     -1,                                        // intraOpNumThreads
@@ -132,7 +129,6 @@ public class OcrConfig {
             boolean useArena,        // arena 内存池扩展策略
             String recKeysPath       // 字典路径（可选）
     ) {
-        // Compact constructor providing default values (matching your original class)
         public RecConfig() {
             this(
                     -1,                               // intraOpNumThreads
