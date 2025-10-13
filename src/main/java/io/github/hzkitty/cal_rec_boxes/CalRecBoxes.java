@@ -164,7 +164,7 @@ public class CalRecBoxes {
             return;
         }
         // 计算字符总长度
-        double charTotalLength = (wordCol.get(wordCol.size() - 1) - wordCol.get(0)) * cellWidth;
+        double charTotalLength = (wordCol.getLast() - wordCol.getFirst()) * cellWidth;
         double charWidth = charTotalLength / (wordCol.size() - 1);
         widthList.add(charWidth);
     }
