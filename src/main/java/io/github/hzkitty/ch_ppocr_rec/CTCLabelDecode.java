@@ -19,23 +19,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 用于存储 decode 后的结果
- */
-record DecodeResult(String text, float confidence,WordBoxInfo wordBoxInfo) {
-//    private String text;        // 解码出的文本
-//    private float confidence;   // 平均置信度
-//
-//    // 存储文本坐标/word box 等信息
-//    private WordBoxInfo wordBoxInfo;
-
-}
-
-/**
  * CTC 解码
  */
 public class CTCLabelDecode {
     // 存储字符集
-    private List<String> character;
+    private final List<String> character;
     // 存储字符到索引的映射
     private Map<String, Integer> dict;
 

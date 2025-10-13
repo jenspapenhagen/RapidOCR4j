@@ -4,10 +4,21 @@ import de.lighti.clipper.Clipper;
 import de.lighti.clipper.ClipperOffset;
 import de.lighti.clipper.Path;
 import de.lighti.clipper.Paths;
-import org.opencv.core.*;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * 用于对DB模型的输出做后处理，生成文本检测框
@@ -31,12 +42,13 @@ public class DBPostProcess {
 
     /**
      * 构造函数
-     * @param thresh         二值化阈值
-     * @param boxThresh      最低得分阈值
-     * @param maxCandidates  最大候选框数
-     * @param unclipRatio    扩张比率
-     * @param scoreMode      "fast" or "slow"
-     * @param useDilation    是否使用膨胀操作
+     *
+     * @param thresh        二值化阈值
+     * @param boxThresh     最低得分阈值
+     * @param maxCandidates 最大候选框数
+     * @param unclipRatio   扩张比率
+     * @param scoreMode     "fast" or "slow"
+     * @param useDilation   是否使用膨胀操作
      */
     public DBPostProcess(float thresh, float boxThresh, int maxCandidates, float unclipRatio, String scoreMode, boolean useDilation) {
         this.thresh = thresh;
@@ -69,9 +81,9 @@ public class DBPostProcess {
         // 1. 生成二值化掩码 segmentation = pred > thresh
         byte[] maskData = new byte[h * w];
         int idx = 0;
-        for (int row = 0; row < h; row++) {
+        for (float[] floats : probMap) {
             for (int col = 0; col < w; col++) {
-                float val = probMap[row][col];
+                float val = floats[col];
                 maskData[idx++] = (byte) ((val > this.thresh) ? 255 : 0);
             }
         }
@@ -345,7 +357,7 @@ public class DBPostProcess {
 
     /**
      * 使用Clipper进行 unclip 扩展，仿照 Python 中 pyclipper + shapely
-     * 
+     *
      * @param box 原始四边形 (4个点)
      * @return 扩展后的新多边形点集
      */
@@ -407,13 +419,7 @@ public class DBPostProcess {
     /**
      * 用于存储 (box, minSideLen)
      */
-    private static class BoxAndSize {
-        Point[] box;
-        float minSideLen;
-        public BoxAndSize(Point[] box, float minSideLen) {
-            this.box = box;
-            this.minSideLen = minSideLen;
-        }
+    public record BoxAndSize(Point[] box, float minSideLen) {
     }
 
     /**
@@ -421,22 +427,7 @@ public class DBPostProcess {
      * boxes: 每个框四个点的 [ [x0,y0], [x1,y1], [x2,y2], [x3,y3] ]
      * scores: 每个框的得分
      */
-    public static class ResultBundle {
-        private final List<Point[]> boxes;
-        private final List<Float> scores;
-
-        public ResultBundle(List<Point[]> boxes, List<Float> scores) {
-            this.boxes = boxes;
-            this.scores = scores;
-        }
-
-        public List<Point[]> getBoxes() {
-            return boxes;
-        }
-
-        public List<Float> getScores() {
-            return scores;
-        }
+    public record ResultBundle(List<Point[]> boxes, List<Float> scores) {
     }
 
 }
