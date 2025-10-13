@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClsPostProcess {
-    private String[] labelList;
+    private final String[] labelList;
 
     // 构造函数，初始化标签列表
     public ClsPostProcess(String[] labelList) {
@@ -16,10 +16,10 @@ public class ClsPostProcess {
     // 调用方法，处理预测结果，返回标签和概率的配对列表
     public List<Pair<String, Float>> call(float[][] preds) {
         List<Pair<String, Float>> decodeOut = new ArrayList<>();
-        for (int i = 0; i < preds.length; i++) {
-            int idx = this.argMax(preds[i]);
+        for (float[] pred : preds) {
+            int idx = this.argMax(pred);
             // 使用 ImmutablePair 创建不可变的键值对
-            decodeOut.add(Pair.of(labelList[idx], preds[i][idx]));
+            decodeOut.add(Pair.of(labelList[idx], pred[idx]));
         }
         return decodeOut;
     }
