@@ -204,9 +204,7 @@ public class TextClassifier {
         resizedMat.copyTo(subArea);
 
         // 5) 将 paddingMat 转为 float[C][H][W]，以符合推理输入
-        float[][][] chwData = matToCHWFloatArray(paddingMat, imgC, imgH, imgW);
-
-        return chwData;
+        return matToCHWFloatArray(paddingMat, imgC, imgH, imgW);
     }
 
     /**
@@ -218,9 +216,9 @@ public class TextClassifier {
     private float[][][][] concatBatchData(List<float[][][][]> batchDataList) {
         int batchSize = batchDataList.size();
         // 假设都符合 [1, C, H, W] 形状
-        int c = batchDataList.get(0)[0].length;
-        int h = batchDataList.get(0)[0][0].length;
-        int w = batchDataList.get(0)[0][0][0].length;
+        int c = batchDataList.getFirst()[0].length;
+        int h = batchDataList.getFirst()[0][0].length;
+        int w = batchDataList.getFirst()[0][0][0].length;
 
         float[][][][] out = new float[batchSize][c][h][w];
         for (int i = 0; i < batchSize; i++) {
@@ -247,9 +245,9 @@ public class TextClassifier {
 
         float[][][] chwArray = new float[c][h][w];
 
+        int index = 0;
         if (c == 1) {
             // 单通道
-            int index = 0;
             for (int row = 0; row < h; row++) {
                 for (int col = 0; col < w; col++) {
                     chwArray[0][row][col] = matData[index++];
@@ -260,7 +258,6 @@ public class TextClassifier {
             // OpenCV 默认存储顺序是 HWC，但我们需要 CHW
             // matData 的排布是 row-major: b0 g0 r0 b1 g1 r1 ...
             // 这里假设通道顺序满足需求，否则需要手动再调换
-            int index = 0;
             for (int row = 0; row < h; row++) {
                 for (int col = 0; col < w; col++) {
                     for (int ch = 0; ch < c; ch++) {

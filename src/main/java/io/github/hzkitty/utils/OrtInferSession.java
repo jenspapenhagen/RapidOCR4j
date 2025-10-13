@@ -74,7 +74,7 @@ public class OrtInferSession {
                 InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(modelPath);
                 this.session = env.createSession(loadModel(inputStream), sessionOptions);
             }
-            inputName = this.getInputNames().get(0);
+            inputName = this.getInputNames().getFirst();
         } catch (OrtException e) {
             throw new RuntimeException(e);
         }

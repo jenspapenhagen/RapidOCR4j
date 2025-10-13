@@ -54,9 +54,7 @@ public class LoadImage {
 
         Mat mat = loadImg(img);
 
-        Mat converted = convertImg(mat, originImgType);
-
-        return converted;
+        return convertImg(mat, originImgType);
     }
 
     /**
@@ -93,8 +91,7 @@ public class LoadImage {
         }
 
         // 2. 如果是 byte[]，认为是图片的二进制内容
-        if (img instanceof byte[]) {
-            byte[] bytes = (byte[]) img;
+        if (img instanceof byte[] bytes) {
             MatOfByte mob = new MatOfByte(bytes);
             Mat mat = Imgcodecs.imdecode(mob, Imgcodecs.IMREAD_COLOR);
             if (mat.empty()) {

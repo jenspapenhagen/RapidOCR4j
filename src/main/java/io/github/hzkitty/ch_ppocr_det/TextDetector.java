@@ -91,7 +91,7 @@ public class TextDetector {
         DBPostProcess.ResultBundle resultBundle = postprocessOp.call(preds, oriHeight, oriWidth);
 
         // resultBundle 里包含 (boxes, scores)
-        List<Point[]> dtBoxes = resultBundle.getBoxes();
+        List<Point[]> dtBoxes = resultBundle.boxes();
 //        List<Float> dtScores = resultBundle.getScores();
 
         // 过滤文本框
