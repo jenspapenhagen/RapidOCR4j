@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.microsoft.onnxruntime</groupId>
             <artifactId>onnxruntime</artifactId>
-            <version>1.27.0</version>
+            <version>1.28.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.bytedeco/opencv/ -->
         <dependency>
